@@ -4,7 +4,10 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -16,7 +19,8 @@ import java.util.Calendar;
 
 public class FullscreenActivity extends AppCompatActivity implements View.OnClickListener {
     FrameLayout mainFrame;
-
+    private AlarmManager alarmManager  = null;
+    private PendingIntent pendingIntent  = null;
     Button bb;
     @Override
 
@@ -26,48 +30,56 @@ public class FullscreenActivity extends AppCompatActivity implements View.OnClic
         mainFrame = findViewById(R.id.main_frame);
         bb= findViewById(R.id.bb);
         bb.setOnClickListener(this);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
-                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+
+//        // Check if Android M or higher
+//        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+//            // Show alert dialog to the user saying a separate permission is needed
+//            // Launch the settings activity if the user prefers
+//            Intent myIntent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+//            startActivity(myIntent);
+//        }
+
+        if (!Settings.canDrawOverlays(this)) {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName()));
+            startActivityForResult(intent, 0);
+        }
     }
 
-    public void startWakeup() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-                mainFrame.setSystemUiVisibility(
-                        View.SYSTEM_UI_FLAG_LOW_PROFILE |
-                                View.SYSTEM_UI_FLAG_FULLSCREEN |
-                                View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
-                                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
-                                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
-                                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                );
-            }
-        });
-    }
-
-    public void stopWakeup() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-                mainFrame.setSystemUiVisibility(
-                        View.SYSTEM_UI_FLAG_VISIBLE
-                );
-            }
-        });
-    }
 
     @Override
     public void onClick(View view) {
-        Calendar c= Calendar.getInstance() ;
+       // Intent openWakeup = new Intent(this, WakeupAlarmActivity.class);
+        // startActivity(openWakeup);
 
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        Intent intent= new Intent(this.getApplicationContext(), AlarmMan.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1,intent,0);
-        alarmManager.set(AlarmManager.RTC_WAKEUP,System.currentTimeMillis()+3000,pendingIntent);
+        setupAlarm();
+
     }
+    private void setupAlarm() {
+        //--------< setupAlarm() >--------
+        // AlarmManager instance from the system services
+        alarmManager = (AlarmManager)   this.getSystemService(Context.ALARM_SERVICE);
+
+        // Intent: this is responsible to prepare the android component what PendingIntent will start when the alarm is triggered. That component can be anyone (activity, service, broadcastReceiver, etc)
+        // Intent to start the Broadcast Receiver
+        Intent intent =new  Intent(this, AlarmMan.class);
+
+        // PendingIntent: this is the pending intent, which waits until the right time, to be called by AlarmManager
+        // The Pending Intent to pass in AlarmManager
+        pendingIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+
+        //< create Alarm >
+        setAlarm();
+        //</ create Alarm >
+        //--------</ setupAlarm() >--------
+    }
+
+    private void setAlarm() {
+        //--------< setup() >--------
+        AlarmManager am = (AlarmManager)   this.getSystemService(Context.ALARM_SERVICE);
+        am.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis()+ 2000, pendingIntent);
+        //--------</ setup() >--------
+    }
+    //========</ Methods >===========
+    //------------</ MainActivity >------------
 }

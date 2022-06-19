@@ -9,8 +9,12 @@ public class AlarmMan extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         Toast.makeText(context.getApplicationContext(), "dkjjkbdcnhj", Toast.LENGTH_SHORT).show();
-        Intent i = new Intent(context, FullscreenActivity.class);
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(i);
+        //------< onReceive() >--------
+        //this event triggers when alarm in Android happens
+        //*open Wakeup Alarm Activity
+        Intent alarmIntent = new Intent(context, WakeupAlarmActivity.class);
+        alarmIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        //open Activitiy
+        context.startActivity(alarmIntent);
     }
 }
